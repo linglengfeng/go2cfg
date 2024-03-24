@@ -1,0 +1,6 @@
+{
+    "svr_name": "cfg2code",
+    "svr_type": "dev",
+    "xlsx_dir": "./xlsx",
+    "out_dir": "./output"
+}
