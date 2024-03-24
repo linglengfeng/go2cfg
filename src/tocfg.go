@@ -101,19 +101,34 @@ var (
 	key        = prop{Type: KEY, Raw: KEY_RAW, Cell: KEY_CELL}
 	note       = prop{Type: NOTE, Raw: NOTE_RAW, Cell: NOTE_CELL}
 
-	checkList = []*prop{&exportSvr, &exportCli, &primaryKey, &unionKeys, &outSvr, &outCli, &typeProp, &name, &key, &note}
+	checkList = []prop{exportSvr, exportCli, primaryKey, unionKeys, outSvr, outCli, typeProp, name, key, note}
 
 	intDefault  = 0
 	strDefault  = ""
 	listDefault = []any{}
+
+	checkSameFile = map[string]struct{}{}
 )
 
 func Start(wordDir string, outDir string) {
-	filePashName := wordDir + "/test.xlsx"
+	files, err := os.ReadDir(wordDir)
+	if err != nil {
+		fmt.Println("read dir error:", err)
+	}
+
+	for _, file := range files {
+		if file.Name()[0] == '$' || file.Name()[0] == '~' {
+			continue
+		}
+		startSingle(wordDir, outDir, file.Name())
+	}
+}
+
+func startSingle(wordDir string, outDir string, fileName string) {
 	createDir(outDir + SVRDIR)
 	createDir(outDir + CLIDIR)
-	xlFile, err := xlsx.OpenFile(wordDir + "/test.xlsx")
-	excelFileBase := filepath.Base(filePashName)
+	xlFile, err := xlsx.OpenFile(wordDir + "/" + fileName)
+	excelFileBase := filepath.Base(fileName)
 	excelFileName := strings.TrimSuffix(excelFileBase, filepath.Ext(excelFileBase))
 	if err != nil {
 		fmt.Println("open Excel:", excelFileName, "err:", err)
@@ -186,24 +201,12 @@ func Start(wordDir string, outDir string) {
 }
 
 func write(outFile string, mapInfo map[string]any) error {
+	if _, ok := checkSameFile[outFile]; ok {
+		return fmt.Errorf("filename repeat:%v", outFile)
+	}
+	checkSameFile[outFile] = struct{}{}
 	content := map2Json(mapInfo)
-	fmt.Println("================ writeSvrFile:", outFile)
 	err := os.WriteFile(outFile, append([]byte(content), byte('\n')), 0644)
-	// file, err := os.Create(outFile)
-	// if err != nil {
-	// 	fmt.Println("create file error:", err)
-	// 	return err
-	// }
-	// defer file.Close()
-
-	// _, err = file.WriteString(content)
-	// if err != nil {
-	// 	fmt.Println("write file error:", err)
-	// 	return err
-	// }
-
-	// err := os.WriteFile("test.json", append([]byte(content), byte('\n')), 0644)
-	// fmt.Println("================ writeSvrFile:", outFile, "err:", err)
 	return err
 }
 
@@ -237,7 +240,7 @@ func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.R
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			prop.Val = outDir + SVRDIR + "/" + name + ".json"
+			exportSvr.Val = outDir + SVRDIR + "/" + name + ".json"
 		case EXPORT_CLI:
 			cells := rows[prop.Raw].Cells
 			name := ""
@@ -246,7 +249,7 @@ func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.R
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			prop.Val = outDir + CLIDIR + "/" + name + ".json"
+			exportCli.Val = outDir + CLIDIR + "/" + name + ".json"
 		default:
 			continue
 		}
