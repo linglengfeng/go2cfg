@@ -1,8 +1,8 @@
 package tocfg
 
 import (
-	"encoding/json"
 	"fmt"
+	"go2cfg/src/tojson"
 	"os"
 	"path/filepath"
 	"strings"
@@ -108,6 +108,10 @@ var (
 	listDefault = []any{}
 
 	checkSameFile = map[string]struct{}{}
+
+	tojsonWriter = new(tojson.Writer)
+	svrFilePath  = ""
+	cliFilePath  = ""
 )
 
 func Start(wordDir string, outDir string) {
@@ -125,8 +129,10 @@ func Start(wordDir string, outDir string) {
 }
 
 func startSingle(wordDir string, outDir string, fileName string) {
-	createDir(outDir + SVRDIR)
-	createDir(outDir + CLIDIR)
+	svrFilePath = outDir + SVRDIR
+	cliFilePath = outDir + CLIDIR
+	createDir(svrFilePath)
+	createDir(cliFilePath)
 	xlFile, err := xlsx.OpenFile(wordDir + "/" + fileName)
 	excelFileBase := filepath.Base(fileName)
 	excelFileName := strings.TrimSuffix(excelFileBase, filepath.Ext(excelFileBase))
@@ -148,7 +154,7 @@ func startSingle(wordDir string, outDir string, fileName string) {
 			fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "cell error, please check format.")
 			return
 		}
-		setPropVal(outDir, excelFileName, sheet.Name, sheet.Rows)
+		setPropVal(excelFileName, sheet.Name, sheet.Rows)
 		// svrKeys, cliKeys := keyCell(sheet.Rows)
 		// svrInfo := map[string]any{}
 		svrMapInfo := map[string]any{}
@@ -167,6 +173,7 @@ func startSingle(wordDir string, outDir string, fileName string) {
 					addSvrMap[key] = text
 				}
 				if sheet.Rows[outCli.Raw].Cells[cellIndex].String() == TRUE {
+					// fmt.Printf("key:%s,%s\t", key, text)
 					addCliMap[key] = text
 				}
 				// fmt.Printf("(%d,%d):%s\t", rowIndex, cellIndex, text)
@@ -178,37 +185,70 @@ func startSingle(wordDir string, outDir string, fileName string) {
 			cliMapInfo[idKey] = addSvrMap
 		}
 
-		writeSvrFile := fmt.Sprintf("%v", exportSvr.Val)
-		if sheet.Rows[exportSvr.Raw].Cells[exportSvr.Is].String() == TRUE {
-			err = write(writeSvrFile, svrMapInfo)
-			if err != nil {
-				fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "out svr file:", writeSvrFile, "error:", err)
-				return
-			}
+		tojsonWriter.SvrNameStr = svrFilePath + fmt.Sprintf("%v", exportSvr.Val)
+		tojsonWriter.CliNameStr = cliFilePath + fmt.Sprintf("%v", exportCli.Val)
+		tojsonWriter.SvrData = svrMapInfo
+		tojsonWriter.CliData = cliMapInfo
+		err = write()
+		if err != nil {
+			fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "write file error:", err)
+			return
 		}
 
-		if sheet.Rows[exportCli.Raw].Cells[exportCli.Is].String() == TRUE {
-			writeCliFile := fmt.Sprintf("%v", exportCli.Val)
-			err = write(writeCliFile, svrMapInfo)
-			if err != nil {
-				fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "out cli file:", writeCliFile, "error:", err)
-				return
-			}
-		}
+		// writeSvrFile := fmt.Sprintf("%v", exportSvr.Val)
+		// jsWriter := tojson.Writer{SvrStr: outFile, CliStr: outFile, Data: mapInfo}
+
+		// writeSvrFile := ""
+		// if sheet.Rows[exportSvr.Raw].Cells[exportSvr.Is].String() == TRUE {
+		// 	err = write(writeSvrFile, svrMapInfo)
+		// 	if err != nil {
+		// 		fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "out svr file:", writeSvrFile, "error:", err)
+		// 		return
+		// 	}
+		// }
+
+		// if sheet.Rows[exportCli.Raw].Cells[exportCli.Is].String() == TRUE {
+		// 	// writeCliFile := fmt.Sprintf("%v", exportCli.Val)
+		// 	writeCliFile := ""
+		// 	err = write(writeCliFile, cliMapInfo)
+		// 	if err != nil {
+		// 		fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "out cli file:", writeCliFile, "error:", err)
+		// 		return
+		// 	}
+		// }
 
 		fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "ok.")
 	}
 }
 
-func write(outFile string, mapInfo map[string]any) error {
-	if _, ok := checkSameFile[outFile]; ok {
-		return fmt.Errorf("filename repeat:%v", outFile)
+func write() error {
+	svrFile := tojsonWriter.SvrName()
+	if _, ok := checkSameFile[svrFile]; ok {
+		return fmt.Errorf("filename repeat:%v", svrFile)
 	}
-	checkSameFile[outFile] = struct{}{}
-	content := map2Json(mapInfo)
-	err := os.WriteFile(outFile, append([]byte(content), byte('\n')), 0644)
-	return err
+	checkSameFile[svrFile] = struct{}{}
+	err := os.WriteFile(svrFile, append([]byte(tojsonWriter.ToSvrData()), byte('\n')), 0644)
+	if err != nil {
+		return err
+	}
+
+	cliFile := tojsonWriter.CliName()
+	if _, ok := checkSameFile[cliFile]; ok {
+		return fmt.Errorf("filename repeat:%v", cliFile)
+	}
+	checkSameFile[svrFile] = struct{}{}
+	return os.WriteFile(cliFile, append([]byte(tojsonWriter.ToCliData()), byte('\n')), 0644)
 }
+
+// func write(outFile string, mapInfo map[string]any) error {
+// 	if _, ok := checkSameFile[outFile]; ok {
+// 		return fmt.Errorf("filename repeat:%v", outFile)
+// 	}
+// 	checkSameFile[outFile] = struct{}{}
+// 	content := map2Json(mapInfo)
+// 	err := os.WriteFile(outFile, append([]byte(content), byte('\n')), 0644)
+// 	return err
+// }
 
 func checkRow(len int) bool {
 	rowLen := len - 1
@@ -229,7 +269,7 @@ func checkCell(rows []*xlsx.Row) bool {
 	return true
 }
 
-func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.Row) {
+func setPropVal(fileName string, sheetName string, rows []*xlsx.Row) {
 	for _, prop := range checkList {
 		switch prop.Type {
 		case EXPORT_SVR:
@@ -240,7 +280,7 @@ func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.R
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			exportSvr.Val = outDir + SVRDIR + "/" + name + ".json"
+			exportSvr.Val = name
 		case EXPORT_CLI:
 			cells := rows[prop.Raw].Cells
 			name := ""
@@ -249,7 +289,25 @@ func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.R
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			exportCli.Val = outDir + CLIDIR + "/" + name + ".json"
+			exportCli.Val = name
+		// case EXPORT_SVR:
+		// 	cells := rows[prop.Raw].Cells
+		// 	name := ""
+		// 	if len(cells)-1 >= prop.Name {
+		// 		name = fmt.Sprintf("%v", rows[prop.Raw].Cells[prop.Name])
+		// 	} else {
+		// 		name = fileName + "_" + sheetName
+		// 	}
+		// 	exportSvr.Val = outDir + SVRDIR + "/" + name + ".json"
+		// case EXPORT_CLI:
+		// 	cells := rows[prop.Raw].Cells
+		// 	name := ""
+		// 	if len(cells)-1 >= prop.Name {
+		// 		name = fmt.Sprintf("%v", rows[prop.Raw].Cells[prop.Name])
+		// 	} else {
+		// 		name = fileName + "_" + sheetName
+		// 	}
+		// 	exportCli.Val = outDir + CLIDIR + "/" + name + ".json"
 		default:
 			continue
 		}
@@ -269,15 +327,6 @@ func setPropVal(outDir string, fileName string, sheetName string, rows []*xlsx.R
 // 	}
 // 	return svrKeys, cliKeys
 // }
-
-func map2Json(param map[string]interface{}) string {
-	dataType, err := json.Marshal(param)
-	if err != nil {
-		panic(err)
-	}
-	dataString := string(dataType)
-	return dataString
-}
 
 func createDir(directoryPath string) {
 	if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
