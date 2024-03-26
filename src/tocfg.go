@@ -90,51 +90,55 @@ type keyVal struct {
 }
 
 var (
-	exportSvr  = prop{Type: EXPORT_SVR, Raw: EXPORT_SVR_RAW, Cell: EXPORT_SVR_CELL, Is: EXPORT_SVR_IS, Name: EXPORT_SVR_NAME}
-	exportCli  = prop{Type: EXPORT_CLI, Raw: EXPORT_CLI_RAW, Cell: EXPORT_CLI_CELL, Is: EXPORT_CLI_IS, Name: EXPORT_CLI_NAME}
-	primaryKey = prop{Type: PRIMARY_KEY, Raw: PRIMARY_KEY_RAW, Cell: PRIMARY_KEY_CELL, Name: PRIMARY_KEY_NAME}
-	unionKeys  = prop{Type: UNION_KEYS, Raw: UNION_KEYS_RAW, Cell: UNION_KEYS_CELL, Name: UNION_KEYS_NAME}
-	outSvr     = prop{Type: OUT_SVR, Raw: OUT_SVR_RAW, Cell: OUT_SVR_CELL}
-	outCli     = prop{Type: OUT_CLI, Raw: OUT_CLI_RAW, Cell: OUT_CLI_CELL}
-	typeProp   = prop{Type: TYPE, Raw: TYPE_RAW, Cell: TYPE_CELL}
-	name       = prop{Type: NAME, Raw: NAME_RAW, Cell: NAME_CELL}
-	key        = prop{Type: KEY, Raw: KEY_RAW, Cell: KEY_CELL}
-	note       = prop{Type: NOTE, Raw: NOTE_RAW, Cell: NOTE_CELL}
+	globalExportSvr  = prop{Type: EXPORT_SVR, Raw: EXPORT_SVR_RAW, Cell: EXPORT_SVR_CELL, Is: EXPORT_SVR_IS, Name: EXPORT_SVR_NAME}
+	globalExportCli  = prop{Type: EXPORT_CLI, Raw: EXPORT_CLI_RAW, Cell: EXPORT_CLI_CELL, Is: EXPORT_CLI_IS, Name: EXPORT_CLI_NAME}
+	globalPrimaryKey = prop{Type: PRIMARY_KEY, Raw: PRIMARY_KEY_RAW, Cell: PRIMARY_KEY_CELL, Name: PRIMARY_KEY_NAME}
+	globalUnionKeys  = prop{Type: UNION_KEYS, Raw: UNION_KEYS_RAW, Cell: UNION_KEYS_CELL, Name: UNION_KEYS_NAME}
+	globalOutSvr     = prop{Type: OUT_SVR, Raw: OUT_SVR_RAW, Cell: OUT_SVR_CELL}
+	globalOutCli     = prop{Type: OUT_CLI, Raw: OUT_CLI_RAW, Cell: OUT_CLI_CELL}
+	globalTypeProp   = prop{Type: TYPE, Raw: TYPE_RAW, Cell: TYPE_CELL}
+	globalName       = prop{Type: NAME, Raw: NAME_RAW, Cell: NAME_CELL}
+	globalKey        = prop{Type: KEY, Raw: KEY_RAW, Cell: KEY_CELL}
+	globalNote       = prop{Type: NOTE, Raw: NOTE_RAW, Cell: NOTE_CELL}
 
-	checkList = []prop{exportSvr, exportCli, primaryKey, unionKeys, outSvr, outCli, typeProp, name, key, note}
+	globalCheckList = []prop{globalExportSvr, globalExportCli, globalPrimaryKey, globalUnionKeys, globalOutSvr, globalOutCli, globalTypeProp, globalName, globalKey, globalNote}
 
-	intDefault  = 0
-	strDefault  = ""
-	listDefault = []any{}
+	globalIntDefault  = 0
+	globalStrDefault  = ""
+	globalListDefault = []any{}
 
-	checkSameFile = map[string]struct{}{}
+	globalCheckSameFile = map[string]struct{}{}
 
-	tojsonWriter = new(tojson.Writer)
-	svrFilePath  = ""
-	cliFilePath  = ""
+	globalExcelDir    = ""
+	globalOutDir      = ""
+	globalSvrFilePath = ""
+	globalCliFilePath = ""
+
+	globalTojsonWriter = new(tojson.Writer)
 )
 
-func Start(wordDir string, outDir string) {
-	files, err := os.ReadDir(wordDir)
+func Start(excelDir string, outDir string) {
+	globalExcelDir = excelDir
+	globalOutDir = outDir
+	globalSvrFilePath = globalOutDir + SVRDIR
+	globalCliFilePath = globalOutDir + CLIDIR
+
+	files, err := os.ReadDir(globalExcelDir)
 	if err != nil {
 		fmt.Println("read dir error:", err)
 	}
+	createDirs()
 
 	for _, file := range files {
 		if file.Name()[0] == '$' || file.Name()[0] == '~' {
 			continue
 		}
-		startSingle(wordDir, outDir, file.Name())
+		startSingle(file.Name())
 	}
 }
 
-func startSingle(wordDir string, outDir string, fileName string) {
-	svrFilePath = outDir + SVRDIR
-	cliFilePath = outDir + CLIDIR
-	createDir(svrFilePath)
-	createDir(cliFilePath)
-
-	xlFile, err := xlsx.OpenFile(wordDir + "/" + fileName)
+func startSingle(fileName string) {
+	xlFile, err := xlsx.OpenFile(globalExcelDir + "/" + fileName)
 	excelFileBase := filepath.Base(fileName)
 	excelFileName := strings.TrimSuffix(excelFileBase, filepath.Ext(excelFileBase))
 	if err != nil {
@@ -156,8 +160,7 @@ func startSingle(wordDir string, outDir string, fileName string) {
 			return
 		}
 		setPropVal(excelFileName, sheet.Name, sheet.Rows)
-		// svrKeys, cliKeys := keyCell(sheet.Rows)
-		// svrInfo := map[string]any{}
+
 		svrMapInfo := map[string]any{}
 		cliMapInfo := map[string]any{}
 		for _, row := range sheet.Rows {
@@ -169,11 +172,11 @@ func startSingle(wordDir string, outDir string, fileName string) {
 			addCliMap := map[string]any{}
 			for cellIndex, cell := range row.Cells {
 				text := cell.String()
-				key := sheet.Rows[key.Raw].Cells[cellIndex].String()
-				if sheet.Rows[outSvr.Raw].Cells[cellIndex].String() == TRUE {
+				key := sheet.Rows[globalKey.Raw].Cells[cellIndex].String()
+				if sheet.Rows[globalOutSvr.Raw].Cells[cellIndex].String() == TRUE {
 					addSvrMap[key] = text
 				}
-				if sheet.Rows[outCli.Raw].Cells[cellIndex].String() == TRUE {
+				if sheet.Rows[globalOutCli.Raw].Cells[cellIndex].String() == TRUE {
 					addCliMap[key] = text
 				}
 				// fmt.Printf("(%d,%d):%s\t", rowIndex, cellIndex, text)
@@ -185,12 +188,13 @@ func startSingle(wordDir string, outDir string, fileName string) {
 			cliMapInfo[idKey] = addSvrMap
 		}
 
-		tojsonWriter.SvrNameStr = fmt.Sprintf("%v", exportSvr.Val)
-		tojsonWriter.CliNameStr = fmt.Sprintf("%v", exportCli.Val)
-		tojsonWriter.SvrPath = svrFilePath
-		tojsonWriter.CliPath = cliFilePath
-		tojsonWriter.SvrData = svrMapInfo
-		tojsonWriter.CliData = cliMapInfo
+		globalTojsonWriter.SvrNameStr = fmt.Sprintf("%v", globalExportSvr.Val)
+		globalTojsonWriter.CliNameStr = fmt.Sprintf("%v", globalExportCli.Val)
+		globalTojsonWriter.SvrPath = globalSvrFilePath
+		globalTojsonWriter.CliPath = globalCliFilePath
+		globalTojsonWriter.SvrData = svrMapInfo
+		globalTojsonWriter.CliData = cliMapInfo
+
 		err = write()
 		if err != nil {
 			fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "write file error:", err)
@@ -202,27 +206,27 @@ func startSingle(wordDir string, outDir string, fileName string) {
 }
 
 func write() error {
-	svrFile := tojsonWriter.SvrName()
-	if _, ok := checkSameFile[svrFile]; ok {
+	svrFile := globalTojsonWriter.SvrName()
+	if _, ok := globalCheckSameFile[svrFile]; ok {
 		return fmt.Errorf("filename repeat:%v", svrFile)
 	}
-	checkSameFile[svrFile] = struct{}{}
-	err := os.WriteFile(svrFile, append([]byte(tojsonWriter.ToSvrData()), byte('\n')), 0644)
+	globalCheckSameFile[svrFile] = struct{}{}
+	err := os.WriteFile(svrFile, append([]byte(globalTojsonWriter.ToSvrData()), byte('\n')), 0644)
 	if err != nil {
 		return err
 	}
 
-	cliFile := tojsonWriter.CliName()
-	if _, ok := checkSameFile[cliFile]; ok {
+	cliFile := globalTojsonWriter.CliName()
+	if _, ok := globalCheckSameFile[cliFile]; ok {
 		return fmt.Errorf("filename repeat:%v", cliFile)
 	}
-	checkSameFile[svrFile] = struct{}{}
-	return os.WriteFile(cliFile, append([]byte(tojsonWriter.ToCliData()), byte('\n')), 0644)
+	globalCheckSameFile[svrFile] = struct{}{}
+	return os.WriteFile(cliFile, append([]byte(globalTojsonWriter.ToCliData()), byte('\n')), 0644)
 }
 
 func checkRow(len int) bool {
 	rowLen := len - 1
-	for _, prop := range checkList {
+	for _, prop := range globalCheckList {
 		if rowLen < prop.Raw {
 			return false
 		}
@@ -231,7 +235,7 @@ func checkRow(len int) bool {
 }
 
 func checkCell(rows []*xlsx.Row) bool {
-	for _, prop := range checkList {
+	for _, prop := range globalCheckList {
 		if len(rows[prop.Raw].Cells)-1 < prop.Cell {
 			return false
 		}
@@ -240,7 +244,7 @@ func checkCell(rows []*xlsx.Row) bool {
 }
 
 func setPropVal(fileName string, sheetName string, rows []*xlsx.Row) {
-	for _, prop := range checkList {
+	for _, prop := range globalCheckList {
 		switch prop.Type {
 		case EXPORT_SVR:
 			cells := rows[prop.Raw].Cells
@@ -250,7 +254,7 @@ func setPropVal(fileName string, sheetName string, rows []*xlsx.Row) {
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			exportSvr.Val = name
+			globalExportSvr.Val = name
 		case EXPORT_CLI:
 			cells := rows[prop.Raw].Cells
 			name := ""
@@ -259,11 +263,16 @@ func setPropVal(fileName string, sheetName string, rows []*xlsx.Row) {
 			} else {
 				name = fileName + "_" + sheetName
 			}
-			exportCli.Val = name
+			globalExportCli.Val = name
 		default:
 			continue
 		}
 	}
+}
+
+func createDirs() {
+	createDir(globalSvrFilePath)
+	createDir(globalCliFilePath)
 }
 
 func createDir(directoryPath string) {
