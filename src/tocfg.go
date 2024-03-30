@@ -331,9 +331,9 @@ func generateUnionKeysInfo(svrSliceInfo []PrimarykeyVal, cliSliceInfo []Primaryk
 	fmt.Println("====================== unionKeys:", unionKeys)
 	// unionSingleMap := make(map[string][][]valInfo)              // 单个map
 	// unionInfo := make([]map[string]([][]valInfo), len(unionKeys)) //所有联合key的 map集合
-	var unionInfo []map[string]([][]valInfo)
-	for range unionKeys {
-		unionInfo = append(unionInfo, make(map[string]([][]valInfo)))
+	unionInfo := make([]map[string]([][]valInfo), len(unionKeys))
+	for i := range unionKeys {
+		unionInfo[i] = make(map[string]([][]valInfo))
 	}
 
 	for _, svrSliceInfoSingle := range svrSliceInfo {
