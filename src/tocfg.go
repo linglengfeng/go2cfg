@@ -218,12 +218,12 @@ func startSingle(fileName string) {
 			cliSliceInfo = append(cliSliceInfo, PrimarykeyVal{key: valInfo{Type: idType, Val: idVal, Name: idName}, val: addCliSlice})
 		}
 		// globalPrimaryKey
-		fmt.Println("====================== globalPrimaryKey:", globalPrimaryKey)
-		fmt.Println("====================== globalUnionKeys:", globalUnionKeys)
-		fmt.Println("====================== globalPrimaryKeyInfo:", globalPrimaryKeyInfo)
-		fmt.Println("====================== globalUnionKeyInfo:", globalUnionKyesInfo)
-		fmt.Println("====================== svrSliceInfo:", svrSliceInfo)
-		fmt.Println("====================== cliSliceInfo:", cliSliceInfo)
+		// fmt.Println("====================== globalPrimaryKey:", globalPrimaryKey)
+		// fmt.Println("====================== globalUnionKeys:", globalUnionKeys)
+		// fmt.Println("====================== globalPrimaryKeyInfo:", globalPrimaryKeyInfo)
+		// fmt.Println("====================== globalUnionKeyInfo:", globalUnionKyesInfo)
+		// fmt.Println("====================== svrSliceInfo:", svrSliceInfo)
+		// fmt.Println("====================== cliSliceInfo:", cliSliceInfo)
 
 		globalTojsonWriter.SvrNameStr = fmt.Sprintf("%v", globalExportSvr.Val)
 		globalTojsonWriter.CliNameStr = fmt.Sprintf("%v", globalExportCli.Val)
@@ -232,35 +232,107 @@ func startSingle(fileName string) {
 		globalTojsonWriter.SvrData = svrMapInfo
 		globalTojsonWriter.CliData = cliMapInfo
 
-		generateUnionKeysInfo(svrSliceInfo, cliSliceInfo)
+		//  []map[string][][]valInfo
+		svrMapListInfo, cliMapListInfo := generateUnionKeysInfo(svrSliceInfo, cliSliceInfo)
+		err = writeMap(svrSliceInfo, cliSliceInfo, svrMapListInfo, cliMapListInfo)
 		// err = write()
-		// if err != nil {
-		// 	fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "write file error:", err)
-		// 	return
-		// }
+		if err != nil {
+			fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "write file error:", err)
+			return
+		}
 
 		fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "ok.")
 	}
 }
 
-func write() error {
+func writeMap(svrSliceInfo []PrimarykeyVal, cliSliceInfo []PrimarykeyVal, svrMapListInfo []map[string][][]valInfo, cliMapListInfo []map[string][][]valInfo) error {
 	svrFile := globalTojsonWriter.SvrName()
 	if _, ok := globalCheckSameFile[svrFile]; ok {
 		return fmt.Errorf("filename repeat:%v", svrFile)
 	}
 	globalCheckSameFile[svrFile] = struct{}{}
-	err := os.WriteFile(svrFile, append([]byte(globalTojsonWriter.ToSvrData()), byte('\n')), 0644)
+	// tostring
+	svrdataPrimarykeyJsonStr := PrimarykeyJsonStr(svrSliceInfo)
+	// svrdataUnionKeysJsonStr := UnionKeysJsonStr(svrMapListInfo) // todo
+	svrdata := svrdataPrimarykeyJsonStr
+	err := os.WriteFile(svrFile, append([]byte(svrdata), byte('\n')), 0644)
 	if err != nil {
 		return err
 	}
 
+	// cli----------
 	cliFile := globalTojsonWriter.CliName()
 	if _, ok := globalCheckSameFile[cliFile]; ok {
 		return fmt.Errorf("filename repeat:%v", cliFile)
 	}
-	globalCheckSameFile[svrFile] = struct{}{}
-	return os.WriteFile(cliFile, append([]byte(globalTojsonWriter.ToCliData()), byte('\n')), 0644)
+	globalCheckSameFile[cliFile] = struct{}{}
+	//tostring
+	clidataPrimarykeyJsonStr := PrimarykeyJsonStr(cliSliceInfo)
+	clidata := clidataPrimarykeyJsonStr
+	err = os.WriteFile(cliFile, append([]byte(clidata), byte('\n')), 0644)
+	if err != nil {
+		return err
+	}
+	return nil
 }
+
+func UnionKeysJsonStr(svrMapListInfo []map[string][][]valInfo) string {
+
+	return ""
+}
+
+func PrimarykeyJsonStr(svrSliceInfo []PrimarykeyVal) string {
+	data := "{\n"
+	for kvi, kv := range svrSliceInfo {
+		kvstring := "\t\"" + kv.key.Val + "\"" + ": {\n"
+		vstring := ""
+
+		for iv, v := range kv.val {
+			vvalstr := ""
+			switch v.Type {
+			case STR:
+				vvalstr = "\"" + v.Val + "\""
+				// fmt.Println("type:", v.Type, v.Val, vvalstr)
+			default:
+				vvalstr = v.Val
+			}
+			if len(kv.val)-1 == iv {
+				vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + "\n"
+			} else {
+				vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + ",\n"
+			}
+		}
+		vstring += "\n"
+		if len(svrSliceInfo)-1 == kvi {
+			kvstring += vstring + "\t}\n"
+		} else {
+			kvstring += vstring + "\t},\n"
+		}
+
+		data += kvstring
+	}
+	data += "}"
+	return data
+}
+
+// func write() error {
+// 	svrFile := globalTojsonWriter.SvrName()
+// 	if _, ok := globalCheckSameFile[svrFile]; ok {
+// 		return fmt.Errorf("filename repeat:%v", svrFile)
+// 	}
+// 	globalCheckSameFile[svrFile] = struct{}{}
+// 	err := os.WriteFile(svrFile, append([]byte(globalTojsonWriter.ToSvrData()), byte('\n')), 0644)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	cliFile := globalTojsonWriter.CliName()
+// 	if _, ok := globalCheckSameFile[cliFile]; ok {
+// 		return fmt.Errorf("filename repeat:%v", cliFile)
+// 	}
+// 	globalCheckSameFile[svrFile] = struct{}{}
+// 	return os.WriteFile(cliFile, append([]byte(globalTojsonWriter.ToCliData()), byte('\n')), 0644)
+// }
 
 func checkRow(len int) bool {
 	rowLen := len - 1
@@ -326,18 +398,16 @@ func createDir(directoryPath string) {
 	}
 }
 
-func generateUnionKeysInfo(svrSliceInfo []PrimarykeyVal, cliSliceInfo []PrimarykeyVal) {
+func generateUnionKeysInfo(svrSliceInfo []PrimarykeyVal, cliSliceInfo []PrimarykeyVal) ([]map[string][][]valInfo, []map[string][][]valInfo) {
 	unionKeys := splitKeys(fmt.Sprintf("%v", globalUnionKeys.Val))
-	fmt.Println("====================== unionKeys:", unionKeys)
+	// fmt.Println("====================== unionKeys:", unionKeys)
 	// unionSingleMap := make(map[string][][]valInfo)              // 单个map
 	// unionInfo := make([]map[string]([][]valInfo), len(unionKeys)) //所有联合key的 map集合
-	unionInfo := make([]map[string]([][]valInfo), len(unionKeys))
+	unionSvrInfo := make([]map[string]([][]valInfo), len(unionKeys))
 	for i := range unionKeys {
-		unionInfo[i] = make(map[string]([][]valInfo))
+		unionSvrInfo[i] = make(map[string]([][]valInfo))
 	}
-
 	for _, svrSliceInfoSingle := range svrSliceInfo {
-
 		singleUkeys := makeSingleUkeys(unionKeys)       // 五个key ，，val 都是 svrSliceInfoSingle.val
 		singleUkeysStr := makeSingleUkeysStr(unionKeys) // 方面用map，key直接转成string
 		for _, singleVal := range svrSliceInfoSingle.val {
@@ -350,22 +420,46 @@ func generateUnionKeysInfo(svrSliceInfo []PrimarykeyVal, cliSliceInfo []Primaryk
 				}
 			}
 		}
-
 		// keys 生成结束
 		for i, slist := range singleUkeysStr {
-			unionSingleMapVal := unionInfo[i]
+			unionSingleMapVal := unionSvrInfo[i]
 			keysOneStr := keys2Str(slist)
 			unionSingleMapVal[keysOneStr] = append(unionSingleMapVal[keysOneStr], svrSliceInfoSingle.val)
-			unionInfo[i] = unionSingleMapVal
+			unionSvrInfo[i] = unionSingleMapVal
 		}
 	}
 
-	fmt.Println("unionInfo:", unionInfo, "singleUvals ================:\n", unionInfo[2], len(unionInfo))
-
-	for i, maoinf := range unionInfo[2] {
-		fmt.Println("i:", i, "maoinf:\n", maoinf)
+	// client
+	unionCliInfo := make([]map[string]([][]valInfo), len(unionKeys))
+	for i := range unionKeys {
+		unionCliInfo[i] = make(map[string]([][]valInfo))
 	}
+	for _, cliSliceInfoSingle := range cliSliceInfo {
+		singleUkeys := makeSingleUkeys(unionKeys)       // 五个key ，，val 都是 svrSliceInfoSingle.val
+		singleUkeysStr := makeSingleUkeysStr(unionKeys) // 方面用map，key直接转成string
+		for _, singleVal := range cliSliceInfoSingle.val {
+			for unionKeyIndex, unionKey := range unionKeys {
+				isin, inUnionpos := inUnionKey(singleVal.Name, unionKey)
+				if isin {
+					singleUkeys[unionKeyIndex][inUnionpos] = singleVal
+					singleUkeysStr[unionKeyIndex][inUnionpos] = valInfo2Str(singleVal)
 
+				}
+			}
+		}
+		// keys 生成结束
+		for i, slist := range singleUkeysStr {
+			unionSingleMapVal := unionCliInfo[i]
+			keysOneStr := keys2Str(slist)
+			unionSingleMapVal[keysOneStr] = append(unionSingleMapVal[keysOneStr], cliSliceInfoSingle.val)
+			unionCliInfo[i] = unionSingleMapVal
+		}
+	}
+	// fmt.Println("unionInfo:", unionInfo, "singleUvals ================:\n", unionInfo[2], len(unionInfo))
+	// for i, maoinf := range unionInfo[2] {
+	// 	fmt.Println("i:", i, "maoinf:\n", maoinf)
+	// }
+	return unionSvrInfo, unionCliInfo
 }
 
 func makeSingleUkeys(unionKeys [][]string) [][]valInfo {
