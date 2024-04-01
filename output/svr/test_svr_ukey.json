@@ -1,0 +1,74 @@
+{
+	"age":{
+"age_INT_10":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+}],
+"age_INT_11":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+}]
+},
+
+
+	"idname":{
+"id_INT_1|name_STR_name1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+}],
+"id_INT_2|name_STR_name2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+}]
+},
+
+
+	"idagesex":{
+"id_INT_1|age_INT_10|sex_INT_1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+}],
+"id_INT_2|age_INT_11|sex_INT_2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+}]
+},
+
+
+	"name":{
+"name_STR_name1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+}],
+"name_STR_name2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+}]
+}
+
+
+}

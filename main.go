@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	xlsxDir := config.Project.GetString("xlsx_dir")
-	outDir := config.Project.GetString("out_dir")
-	tocfg.Start(xlsxDir, outDir)
+	excelDir := config.Project.GetString("excel_dir")
+	outSvrDir := config.Project.GetString("out_svr_dir")
+	outCliDir := config.Project.GetString("out_cli_dir")
+	tocfg.Start(tocfg.StartOptions{DirExcel: excelDir, DirOutSvr: outSvrDir, DirOutCli: outCliDir})
 }
