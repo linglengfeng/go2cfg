@@ -252,9 +252,12 @@ func writeMap(svrSliceInfo []PrimarykeyVal, cliSliceInfo []PrimarykeyVal, svrMap
 	}
 	globalCheckSameFile[svrFile] = struct{}{}
 	// tostring
-	svrdataPrimarykeyJsonStr := PrimarykeyJsonStr(svrSliceInfo)
-	// svrdataUnionKeysJsonStr := UnionKeysJsonStr(svrMapListInfo) // todo
-	svrdata := svrdataPrimarykeyJsonStr
+
+	// svrdataPrimarykeyJsonStr := PrimarykeyJsonStr(svrSliceInfo)
+	// // todo:
+	// svrdataUnionKeysJsonStr := UnionKeysJsonStr(svrMapListInfo)
+	// svrdata := svrdataPrimarykeyJsonStr
+	svrdata := genJsonString(svrSliceInfo, svrMapListInfo)
 	err := os.WriteFile(svrFile, append([]byte(svrdata), byte('\n')), 0644)
 	if err != nil {
 		return err
@@ -276,9 +279,95 @@ func writeMap(svrSliceInfo []PrimarykeyVal, cliSliceInfo []PrimarykeyVal, svrMap
 	return nil
 }
 
-func UnionKeysJsonStr(svrMapListInfo []map[string][][]valInfo) string {
+func genJsonString(svrSliceInfo []PrimarykeyVal, svrMapListInfo []map[string][][]valInfo) string {
+	data := ""
+	// svrdataPrimarykeyJsonStr := PrimarykeyJsonStr(svrSliceInfo)
+	// fmt.Println("=======================\n", svrMapListInfo)
+	svrdataUnionKeysJsonStr := UnionKeysJsonStr(svrMapListInfo)
+	fmt.Println(len(svrMapListInfo))
+	fmt.Println("=======================\n", svrdataUnionKeysJsonStr)
 
-	return ""
+	data = svrdataUnionKeysJsonStr
+	return data
+}
+
+func UnionKeysJsonStr(svrMapListInfo []map[string][][]valInfo) string {
+	unionKeys := splitKeys(fmt.Sprintf("%v", globalUnionKeys.Val))
+	data := "{\n"
+	for kindex, mapv := range svrMapListInfo {
+		mapstr := "\t"
+
+		kfield := unionKeys[kindex]
+		kfieldstr := ""
+		if len(kfield) > 1 {
+			kfieldstr += "\""
+			for _, kfields := range kfield {
+				kfieldstr += kfields
+			}
+			kfieldstr += "\""
+		} else {
+			kfieldstr += "\"" + kfield[0] + "\""
+		}
+
+		singlemapStr := ""
+		singlemapStr = kfieldstr + ":{\n"
+
+		mapvstring := ""
+		i := 0
+		for mapvK, mapvV := range mapv {
+			mapvstring += ""
+			mapvsingleStr := ""
+			mapvsingleStr += "\"" + mapvK + "\"" + ":[{\n"
+			for mapvvi, mapvv := range mapvV {
+				if mapvvi > 0 {
+					mapvsingleStr += "}, {" + strValInfo(mapvv)
+				} else {
+					mapvsingleStr += strValInfo(mapvv)
+				}
+			}
+			if i == len(mapv)-1 {
+				mapvstring += mapvsingleStr + "}]\n"
+			} else {
+				mapvstring += mapvsingleStr + "}],\n"
+			}
+			i++
+		}
+
+		if kindex == len(svrMapListInfo)-1 {
+			singlemapStr += mapvstring + "}\n\n\n"
+		} else {
+			singlemapStr += mapvstring + "},\n\n\n"
+		}
+
+		mapstr += singlemapStr
+
+		mapstr += ""
+		data += mapstr
+	}
+	data += "}"
+	return data
+}
+
+func strValInfo(valInfoList []valInfo) string {
+	vstring := ""
+	for iv, v := range valInfoList {
+		vvalstr := ""
+		switch v.Type {
+		case STR:
+			vvalstr = "\"" + v.Val + "\""
+			// fmt.Println("type:", v.Type, v.Val, vvalstr)
+		default:
+			vvalstr = v.Val
+		}
+		if len(valInfoList)-1 == iv {
+			vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + ""
+		} else {
+			vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + ",\n"
+		}
+	}
+	vstring += "\n"
+	// fmt.Println("vstring:", vstring)
+	return vstring
 }
 
 func PrimarykeyJsonStr(svrSliceInfo []PrimarykeyVal) string {
@@ -297,7 +386,7 @@ func PrimarykeyJsonStr(svrSliceInfo []PrimarykeyVal) string {
 				vvalstr = v.Val
 			}
 			if len(kv.val)-1 == iv {
-				vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + "\n"
+				vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + ""
 			} else {
 				vstring += "\t\t\"" + v.Name + "\"" + ": " + vvalstr + ",\n"
 			}
@@ -314,25 +403,6 @@ func PrimarykeyJsonStr(svrSliceInfo []PrimarykeyVal) string {
 	data += "}"
 	return data
 }
-
-// func write() error {
-// 	svrFile := globalTojsonWriter.SvrName()
-// 	if _, ok := globalCheckSameFile[svrFile]; ok {
-// 		return fmt.Errorf("filename repeat:%v", svrFile)
-// 	}
-// 	globalCheckSameFile[svrFile] = struct{}{}
-// 	err := os.WriteFile(svrFile, append([]byte(globalTojsonWriter.ToSvrData()), byte('\n')), 0644)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	cliFile := globalTojsonWriter.CliName()
-// 	if _, ok := globalCheckSameFile[cliFile]; ok {
-// 		return fmt.Errorf("filename repeat:%v", cliFile)
-// 	}
-// 	globalCheckSameFile[svrFile] = struct{}{}
-// 	return os.WriteFile(cliFile, append([]byte(globalTojsonWriter.ToCliData()), byte('\n')), 0644)
-// }
 
 func checkRow(len int) bool {
 	rowLen := len - 1
@@ -478,8 +548,19 @@ func makeSingleUkeysStr(unionKeys [][]string) [][]string {
 	return singleUkeys
 }
 
-func valInfo2Str(a valInfo) string {
-	return fmt.Sprintf("%v_%v_%v", a.Name, a.Type, a.Val)
+func valInfo2Str(v valInfo) string {
+	return v.Name + "_" + v.Type + "_" + v.Val
+	// return fmt.Sprintf("%v_%v_%v", v.Name, v.Type, v.Val)
+}
+
+func str2valInfo(str string) valInfo {
+	splitStr := strings.Split(str, "_")
+	valstr := ""
+	for _, s := range splitStr[1:] {
+		valstr += s
+	}
+	newA := valInfo{Name: splitStr[0], Type: splitStr[1], Val: valstr}
+	return newA
 }
 
 func keys2Str(strlist []string) string {
@@ -488,7 +569,8 @@ func keys2Str(strlist []string) string {
 	}
 	restr := strlist[0]
 	for _, str := range strlist[1:] {
-		restr = fmt.Sprintf("%v|%v", restr, str)
+		// restr = fmt.Sprintf("%v|%v", restr, str)
+		restr = restr + "|" + str
 	}
 	return restr
 }
