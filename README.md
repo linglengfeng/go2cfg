@@ -9,6 +9,8 @@ excel to file
 
 
 ## config.json 说明
+		
+```json
 {
     "excel_dir": "./xlsx"   <!-- 导出目录 -->
     "writers": [ <!-- 导出格式列表 -->
@@ -24,16 +26,18 @@ excel to file
        }
     ]
 }
+```
 
+### xlsx 格式说明
 
-### xlsx 格式说明:
-| EXPORT_SVR	| TRUE	| fileName | 				
-| EXPORT_CLI	| FALSE	| fileName |		
-| PRIMARY_KEY	| id	| 		   |	
-| UNION_KEYS_SVR| [[name],[age],[id,name],[id,age,sex]]	| 			
-| UNION_KEYS_CLI|       |          | 				
-|---------------|-------|-------|-------|-------|-------|-------|	
-|               |       |       |       |       |       |       | 
+|   格式说明    |       |       |       |       |       |       |
+|---------------|-------|-------|-------|-------|-------|-------|
+| EXPORT_SVR	| TRUE	| fName | 			
+| EXPORT_CLI	| FALSE	| fName |		
+| PRIMARY_KEY	| id	| 		|	
+| UNION_KEYS_SVR| 	    |
+| UNION_KEYS_CLI|       |       | 
+|---------------|-------|-------|-------|-------|-------|-------|
 | OUT_SVR	    | TRUE	| TRUE	| TRUE	| TRUE	| TRUE	| FALSE | 
 | OUT_CLI	    | TRUE	| TRUE	| TRUE	| TRUE	| TRUE	| TRUE  | 
 | TYPE	        | INT	| STR	|  INT	| INT	| LIST	|  STR  | 
