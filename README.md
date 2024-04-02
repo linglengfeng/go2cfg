@@ -7,7 +7,8 @@ excel to file
 参照 tocfgTxt.go, tocfgJson.go
 格式说明代码：tocfgConst.go
 
-config.json 说明
+
+## config.json 说明
 {
     "excel_dir": "./xlsx"   <!-- 导出目录 -->
     "writers": [ <!-- 导出格式列表 -->
@@ -25,23 +26,37 @@ config.json 说明
 }
 
 
-xlsx 格式说明:
--------------------------------------------------------
-EXPORT_SVR	TRUE					
-EXPORT_CLI	FALSE					
-PRIMARY_KEY	id					
-UNION_KEYS_SVR	[[name],[age],[id,name],[id,age,sex]]					
-UNION_KEYS_CLI						
-                        
-OUT_SVR	TRUE	TRUE	TRUE	TRUE	TRUE	FALSE
-OUT_CLI	TRUE	TRUE	TRUE	TRUE	TRUE	TRUE
-TYPE	INT	    STR	     INT	INT	    LIST	STR
-NAME	id	    名字	年龄	性别	物品	说明
-KEY	    id	    name	age	    sex	    items	desc
-NOTE	备注	备注	备注	备注	备注	
-VALUE	1	    name1	10	     1	   [1,2,3]	说明1
-VALUE	2	    name2	11	     2	   [1,2,4]	说明2
--------------------------------------------------------
+### xlsx 格式说明:
+|---------------|-------|----------|
+| EXPORT_SVR	| TRUE	| fileName | 
+|---------------|-------|----------|				
+| EXPORT_CLI	| FALSE	| fileName |
+|---------------|-------|----------|			
+| PRIMARY_KEY	| id	| 		   |	
+|---------------|-------|----------|	
+| UNION_KEYS_SVR| [[name],[age],[id,name],[id,age,sex]]	| 	
+|---------------|-------|----------|			
+| UNION_KEYS_CLI|       |          | 
+|---------------|-------|-------|-------|-------|-------|-------|					
+|               |       |       |       |       |       |       | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| OUT_SVR	    | TRUE	| TRUE	| TRUE	| TRUE	| TRUE	| FALSE | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| OUT_CLI	    | TRUE	| TRUE	| TRUE	| TRUE	| TRUE	| TRUE  | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| TYPE	        | INT	| STR	|  INT	| INT	| LIST	|  STR  | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| NAME	        | id	| 名字	| 年龄	| 性别	| 物品	| 说明  | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| KEY	        | id	| name	| age	| sex	| items	| desc  | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| NOTE	        | 备注	| 备注	| 备注	| 备注	| 备注	|       | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| VALUE	        | 1	    | name1	| 10	|   1	|[1,2,3]| 说明1 | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+| VALUE	        | 2	    | name2	| 11	|   2	|[1,2,4]| 说明2 | 
+|---------------|-------|-------|-------|-------|-------|-------|	
+
 
 第一行：
     第一列：固定 EXPORT_SVR，第二列：TRUE|FALSE 表示该页是否导出服务器（TRUE导出，FALSE不导出），第三列：导出文件名（不填默认filename_sheetname）
