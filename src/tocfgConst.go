@@ -1,5 +1,11 @@
 package tocfg
 
+// 导出类型
+const (
+	EXPORT_TYPE_JSON = "json"
+	EXPORT_TYPE_TXT  = "txt"
+)
+
 // 格式规范
 const (
 	EXPORT_SVR      = "EXPORT_SVR"

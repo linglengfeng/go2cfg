@@ -7,7 +7,6 @@ import (
 
 func main() {
 	excelDir := config.Project.GetString("excel_dir")
-	outSvrDir := config.Project.GetString("out_svr_dir")
-	outCliDir := config.Project.GetString("out_cli_dir")
-	tocfg.Start(tocfg.StartOptions{DirExcel: excelDir, DirOutSvr: outSvrDir, DirOutCli: outCliDir})
+	WritersStr := config.Project.Get("writers")
+	tocfg.Start(tocfg.StartOptions{DirExcel: excelDir, WritersOptsStr: WritersStr})
 }

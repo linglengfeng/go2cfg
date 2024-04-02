@@ -1,7 +1,15 @@
 {
-    "svr_name": "cfg2code",
-    "svr_type": "dev",
     "excel_dir": "./xlsx",
-    "out_svr_dir": "./output/svr",
-    "out_cli_dir": "./output/cli"
+    "writers": [
+       {
+        "type": "json",
+        "out_svr_dir": "./output/json/svr",
+        "out_cli_dir": "./output/json/cli"
+       },
+       {
+        "type": "txt",
+        "out_svr_dir": "./output/txt/svr",
+        "out_cli_dir": "./output/txt/cli"
+       }
+    ]
 }

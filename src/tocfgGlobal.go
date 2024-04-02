@@ -16,6 +16,5 @@ var (
 
 	globalCheckList = []prop{globalExportSvr, globalExportCli, globalPrimaryKey, globalUnionSvrKeys, globalUnionCliKeys, globalOutSvr, globalOutCli, globalType, globalName, globalKey, globalNote}
 
-	globalCheckSameFile  = map[string]struct{}{}
 	globalPrimaryKeyInfo = ValInfo{}
 )

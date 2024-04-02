@@ -3,6 +3,7 @@ package tocfg
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/tealeg/xlsx"
 )
@@ -80,18 +81,17 @@ func makeSingleUkeysStr(unionKeys [][]string) [][]string {
 
 func valInfo2Str(v ValInfo) string {
 	return v.Name + "_" + v.Type + "_" + v.Val
-	// return fmt.Sprintf("%v_%v_%v", v.Name, v.Type, v.Val)
 }
 
-// func str2valInfo(str string) ValInfo {
-// 	splitStr := strings.Split(str, "_")
-// 	valstr := ""
-// 	for _, s := range splitStr[1:] {
-// 		valstr += s
-// 	}
-// 	newA := ValInfo{Name: splitStr[0], Type: splitStr[1], Val: valstr}
-// 	return newA
-// }
+func str2valInfo(str string) ValInfo {
+	splitStr := strings.Split(str, "_")
+	valstr := ""
+	for _, s := range splitStr[2:] {
+		valstr += s
+	}
+	newA := ValInfo{Name: splitStr[0], Type: splitStr[1], Val: valstr}
+	return newA
+}
 
 func keys2Str(strlist []string) string {
 	if len(strlist) < 2 {
@@ -99,7 +99,6 @@ func keys2Str(strlist []string) string {
 	}
 	restr := strlist[0]
 	for _, str := range strlist[1:] {
-		// restr = fmt.Sprintf("%v|%v", restr, str)
 		restr = restr + "|" + str
 	}
 	return restr
@@ -185,10 +184,18 @@ func reverseString(s string) string {
 	return string(runes)
 }
 
-func addCheckFileName(fileName string) bool {
-	if _, ok := globalCheckSameFile[fileName]; ok {
-		return false
+func toStartWriter(writersStr any) []WritersOpts {
+	writers := writersStr.([]any)
+	writerlist := []WritersOpts{}
+	for _, writer := range writers {
+		writerMap := writer.(map[string]any)
+		outCliDir := writerMap["out_cli_dir"]
+		outSvrDir := writerMap["out_svr_dir"]
+		filetype := writerMap["type"]
+		if outCliDir == nil || outSvrDir == nil || filetype == nil {
+			continue
+		}
+		writerlist = append(writerlist, WritersOpts{Type: filetype.(string), DirOutSvr: outSvrDir.(string), DirOutCli: outCliDir.(string)})
 	}
-	globalCheckSameFile[fileName] = struct{}{}
-	return true
+	return writerlist
 }
