@@ -4,6 +4,7 @@ package tocfg
 const (
 	EXPORT_TYPE_JSON = "json"
 	EXPORT_TYPE_TXT  = "txt"
+	EXPORT_TYPE_ERL  = "erl"
 )
 
 // 格式规范

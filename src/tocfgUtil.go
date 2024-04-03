@@ -53,6 +53,24 @@ func setPropVal(fileName string, sheetName string, rows []*xlsx.Row) {
 				name = rows[prop.Raw].Cells[prop.Name].String()
 			}
 			globalUnionCliKeys.Val = name
+		case OUT_SVR:
+			globalOutSvrKeys = ValInfoList{}
+			if len(cells) > 1 {
+				for icell, cell := range cells {
+					if cell.String() == TRUE {
+						globalOutSvrKeys = append(globalOutSvrKeys, ValInfo{Name: rows[globalKey.Raw].Cells[icell].String(), Type: rows[globalType.Raw].Cells[icell].String()})
+					}
+				}
+			}
+		case OUT_CLI:
+			globalOutCliKeys = ValInfoList{}
+			if len(cells) > 1 {
+				for icell, cell := range cells {
+					if cell.String() == TRUE {
+						globalOutCliKeys = append(globalOutCliKeys, ValInfo{Name: rows[globalKey.Raw].Cells[icell].String(), Type: rows[globalType.Raw].Cells[icell].String()})
+					}
+				}
+			}
 		default:
 			continue
 		}
@@ -103,16 +121,6 @@ func keys2Str(strlist []string) string {
 	}
 	return restr
 }
-
-// func unionKeysMaxLen(unionKeys [][]string) int {
-// 	max := 0
-// 	for _, s := range unionKeys {
-// 		if len(s) > max {
-// 			max = len(s)
-// 		}
-// 	}
-// 	return max
-// }
 
 func inUnionKey(target string, strList []string) (bool, int) {
 	found := false

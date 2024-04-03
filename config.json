@@ -10,6 +10,11 @@
         "type": "txt",
         "out_svr_dir": "./output/txt/svr",
         "out_cli_dir": "./output/txt/cli"
+       },
+       {
+        "type": "erl",
+        "out_svr_dir": "./output/erl/svr",
+        "out_cli_dir": "./output/erl/cli"
        }
     ]
 }

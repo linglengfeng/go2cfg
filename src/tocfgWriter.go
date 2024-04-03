@@ -6,6 +6,8 @@ func writeAll(excelFileName string, sheetName string, Options StartOptions, svrP
 	for _, writerOpt := range Options.WritersOpts {
 		writer := Writer{
 			writerType:        writerOpt.Type,
+			SvrExportKeys:     globalOutSvrKeys,
+			CliExportKeys:     globalOutCliKeys,
 			SvrFileName:       toString(globalExportSvr.Val),
 			CliFileName:       toString(globalExportCli.Val),
 			SvrPath:           writerOpt.DirOutSvr,
@@ -21,10 +23,12 @@ func writeAll(excelFileName string, sheetName string, Options StartOptions, svrP
 			writeJson(writer)
 		case EXPORT_TYPE_TXT:
 			writeTxt(writer)
+		case EXPORT_TYPE_ERL:
+			writeErl(writer)
 		default:
 			fmt.Println("not case this file type, error type:", writerOpt.Type, " excelFileName:", excelFileName, "sheetName:", sheetName)
 			continue
 		}
-		fmt.Println("file:", excelFileName, "sheetName:", sheetName, ", write ok.")
+		fmt.Println("write:", writer.writerType, ",file:", excelFileName, ",sheetName:", sheetName, ", write ok.")
 	}
 }

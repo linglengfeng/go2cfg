@@ -17,4 +17,7 @@ var (
 	globalCheckList = []prop{globalExportSvr, globalExportCli, globalPrimaryKey, globalUnionSvrKeys, globalUnionCliKeys, globalOutSvr, globalOutCli, globalType, globalName, globalKey, globalNote}
 
 	globalPrimaryKeyInfo = ValInfo{}
+
+	globalOutSvrKeys = ValInfoList{}
+	globalOutCliKeys = ValInfoList{}
 )

@@ -48,6 +48,8 @@ type WritersOpts struct {
 
 type Writer struct {
 	writerType        string
+	SvrExportKeys     ValInfoList
+	CliExportKeys     ValInfoList
 	SvrFileName       string
 	CliFileName       string
 	SvrPath           string
