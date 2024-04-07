@@ -146,7 +146,7 @@ func UnionKeysErlStr(ukeyModuleName string, keys ValInfoList, exportUkeys [][]st
 				if singleMapInfovvi == len(singleMapInfov)-1 {
 					vstr += valInfoList2ErlRecordStr(recordname, singleMapInfovv)
 				} else {
-					vstr += valInfoList2ErlRecordStr(recordname, singleMapInfovv) + ", "
+					vstr += valInfoList2ErlRecordStr(recordname, singleMapInfovv) + ",\n\t"
 				}
 			}
 			vstr += "]"
