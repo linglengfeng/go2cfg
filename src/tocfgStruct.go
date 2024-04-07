@@ -50,6 +50,8 @@ type Writer struct {
 	writerType        string
 	SvrExportKeys     ValInfoList
 	CliExportKeys     ValInfoList
+	SvrExportUkeys    [][]string
+	CliExportUkeys    [][]string
 	SvrFileName       string
 	CliFileName       string
 	SvrPath           string

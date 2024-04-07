@@ -89,15 +89,10 @@ func startSingle(fileName string, Options StartOptions) {
 			cliPrimarykeyInfo = append(cliPrimarykeyInfo, PrimarykeyVal{Key: ValInfo{Type: idType, Val: idVal, Name: idName}, ValList: addCliValInfoList})
 		}
 		// 生成多键信息
-		svrMapListInfo := generateUnionKeysInfo(svrPrimarykeyInfo)
-		cliMapListInfo := generateUnionKeysInfo(cliPrimarykeyInfo)
+		svrMapListInfo := generateUnionKeysInfo(splitKeys(toString(globalUnionSvrKeys.Val)), svrPrimarykeyInfo)
+		cliMapListInfo := generateUnionKeysInfo(splitKeys(toString(globalUnionCliKeys.Val)), cliPrimarykeyInfo)
 
 		writeAll(excelFileName, sheet.Name, Options, svrPrimarykeyInfo, cliPrimarykeyInfo, svrMapListInfo, cliMapListInfo)
-		// if err != nil {
-		// 	fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "write file error:", err)
-		// 	return
-		// }
-		// fmt.Println("file:", excelFileName, "sheet name:", sheet.Name, "ok.")
 	}
 }
 
@@ -120,8 +115,7 @@ func checkCell(rows []*xlsx.Row) bool {
 	return true
 }
 
-func generateUnionKeysInfo(primarykeyInfo []PrimarykeyVal) []map[string]ValInfoList2 {
-	unionKeys := splitKeys(toString(globalUnionSvrKeys.Val))
+func generateUnionKeysInfo(unionKeys [][]string, primarykeyInfo []PrimarykeyVal) []map[string]ValInfoList2 {
 	unionInfo := make([]map[string]ValInfoList2, len(unionKeys))
 	for i := range unionKeys {
 		unionInfo[i] = make(map[string]ValInfoList2)

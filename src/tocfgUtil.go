@@ -200,8 +200,14 @@ func toStartWriter(writersStr any) []WritersOpts {
 		outCliDir := writerMap["out_cli_dir"]
 		outSvrDir := writerMap["out_svr_dir"]
 		filetype := writerMap["type"]
-		if outCliDir == nil || outSvrDir == nil || filetype == nil {
+		if filetype == nil {
 			continue
+		}
+		if outCliDir == nil {
+			outCliDir = ""
+		}
+		if outSvrDir == nil {
+			outSvrDir = ""
 		}
 		writerlist = append(writerlist, WritersOpts{Type: filetype.(string), DirOutSvr: outSvrDir.(string), DirOutCli: outCliDir.(string)})
 	}

@@ -8,6 +8,8 @@ func writeAll(excelFileName string, sheetName string, Options StartOptions, svrP
 			writerType:        writerOpt.Type,
 			SvrExportKeys:     globalOutSvrKeys,
 			CliExportKeys:     globalOutCliKeys,
+			SvrExportUkeys:    splitKeys(fmt.Sprintf("%v", globalUnionSvrKeys.Val)),
+			CliExportUkeys:    splitKeys(fmt.Sprintf("%v", globalUnionCliKeys.Val)),
 			SvrFileName:       toString(globalExportSvr.Val),
 			CliFileName:       toString(globalExportCli.Val),
 			SvrPath:           writerOpt.DirOutSvr,
