@@ -15,6 +15,11 @@
         "type": "erl",
         "out_svr_dir": "./output/erl/svr",
         "out_cli_dir": "./output/erl/cli"
+       },
+       {
+        "type": "erl_hrl",
+        "out_svr_dir": "./output/erl_hrl/svr",
+        "out_cli_dir": "./output/erl_hrl/cli"
        }
     ]
 }

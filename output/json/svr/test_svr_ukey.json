@@ -1,0 +1,70 @@
+{
+	"age":{
+		"10":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+		}],
+		"11":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+		}]
+	},
+
+	"id_name":{
+		"1_name1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+		}],
+		"2_name2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+		}]
+	},
+
+	"id_age_sex":{
+		"1_10_1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+		}],
+		"2_11_2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+		}]
+	},
+
+	"name":{
+		"name1":[{
+		"id": 1,
+		"name": "name1",
+		"age": 10,
+		"sex": 1,
+		"items": [1,2,3]
+		}],
+		"name2":[{
+		"id": 2,
+		"name": "name2",
+		"age": 11,
+		"sex": 2,
+		"items": [1,2,4]
+		}]
+	}
+
+}

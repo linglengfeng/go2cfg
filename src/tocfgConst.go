@@ -5,6 +5,7 @@ const (
 	EXPORT_TYPE_JSON = "json"
 	EXPORT_TYPE_TXT  = "txt"
 	EXPORT_TYPE_ERL  = "erl"
+	EXPORT_TYPE_ERL_HRL  = "erl_hrl"
 )
 
 // 格式规范

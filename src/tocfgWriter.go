@@ -27,6 +27,8 @@ func writeAll(excelFileName string, sheetName string, Options StartOptions, svrP
 			writeTxt(writer)
 		case EXPORT_TYPE_ERL:
 			writeErl(writer)
+		case EXPORT_TYPE_ERL_HRL:
+			writeErlHrl(writer)
 		default:
 			fmt.Println("not case this file type, error type:", writerOpt.Type, " excelFileName:", excelFileName, "sheetName:", sheetName)
 			continue
