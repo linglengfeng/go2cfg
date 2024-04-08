@@ -19,15 +19,20 @@ func Start(Options StartOptions) {
 	if err != nil {
 		fmt.Println("read dir error:", err)
 	}
+
+	writerlist, wokerlist := preStartSingle(Options)
+	if len(writerlist) <= 0 {
+		return
+	}
 	for _, file := range excelFiles {
 		if isTempFile(file.Name()) {
 			continue
 		}
-		startSingle(file.Name(), Options)
+		startSingle(file.Name(), Options, wokerlist, writerlist)
 	}
 }
 
-func startSingle(fileName string, Options StartOptions) {
+func startSingle(fileName string, Options StartOptions, wokerlist []WriterWorker, writerlist []*Writer) {
 	singleFileName, err := xlsx.OpenFile(Options.DirExcel + "/" + fileName)
 	if err != nil {
 		fmt.Println("open Excel:", singleFileName, "err:", err)
@@ -92,7 +97,7 @@ func startSingle(fileName string, Options StartOptions) {
 		svrMapListInfo := generateUnionKeysInfo(splitKeys(toString(globalUnionSvrKeys.Val)), svrPrimarykeyInfo)
 		cliMapListInfo := generateUnionKeysInfo(splitKeys(toString(globalUnionCliKeys.Val)), cliPrimarykeyInfo)
 
-		writeAll(excelFileName, sheet.Name, Options, svrPrimarykeyInfo, cliPrimarykeyInfo, svrMapListInfo, cliMapListInfo)
+		writeAll(excelFileName, sheet.Name, wokerlist, writerlist, svrPrimarykeyInfo, cliPrimarykeyInfo, svrMapListInfo, cliMapListInfo)
 	}
 }
 

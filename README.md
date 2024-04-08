@@ -3,26 +3,52 @@ excel to file
 
 支持json,txt
 
-想添加别的格式，在tocfgWriter.go 文件中添加case到自定义格式的文件中去执行具体逻辑
+想添加别的格式，在tocfgWriter.go函数initWorker中添加接口WriterWorker
 参照 tocfgTxt.go, tocfgJson.go
 格式说明代码：tocfgConst.go
 
 
 ## config.json 说明
 		
+excel_dir 必填 excel导出目录
+writers 必填 导出列表
+    type 目前支持 json,txt,erl,erl_hrl
+    out_svr_dir 可选，没有字段表示不导出
+    out_cli_dir 可选，没有字段表示不导出
+
+导出文件参照：output目录下
+
 ```json
 {
-    "excel_dir": "./xlsx"   <!-- 导出目录 -->
-    "writers": [ <!-- 导出格式列表 -->
+    <!-- 导出目录 -->
+    "excel_dir": "./xlsx"
+    <!-- 导出列表 -->
+    "writers": [
        {
-        "type": "json",  <!-- 导出格式 -->
-        "out_svr_dir": "./output/json/svr",  <!-- 导出服务器目录 -->
-        "out_cli_dir": "./output/json/cli"  <!-- 导出客户端目录 -->
+         <!-- 导出格式 json -->
+        "type": "json",
+        <!-- 导出服务器目录 -->
+        "out_svr_dir": "./output/json/svr",
+        <!-- 导出客户端目录 -->
+        "out_cli_dir": "./output/json/cli"
        },
+        <!-- 导出txt -->
        {
         "type": "txt",
         "out_svr_dir": "./output/txt/svr",
         "out_cli_dir": "./output/txt/cli"
+       },
+       <!-- 导出erl -->
+       {
+        "type": "erl",
+        "out_svr_dir": "./output/erl/svr",
+        "out_cli_dir": "./output/erl/cli"
+       },
+       <!-- 导出erl和头文件 -->
+       {
+        "type": "erl_hrl",
+        "out_svr_dir": "./output/erl_hrl/svr",
+        "out_cli_dir": "./output/erl_hrl/cli"
        }
     ]
 }

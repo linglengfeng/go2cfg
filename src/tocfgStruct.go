@@ -1,9 +1,5 @@
 package tocfg
 
-import (
-	"encoding/json"
-)
-
 type prop struct {
 	Type string
 	Raw  int
@@ -40,6 +36,18 @@ type StartOptions struct {
 	WritersOpts    []WritersOpts
 }
 
+func (StartOpts *StartOptions) GenDeal() StartOptions {
+	if StartOpts.DirExcel == "" {
+		StartOpts.DirExcel = DEFALUT_EXCELDIR
+	}
+	if StartOpts.WritersOptsStr == nil {
+		StartOpts.WritersOpts = []WritersOpts{}
+	} else {
+		StartOpts.WritersOpts = toStartWriter(StartOpts.WritersOptsStr)
+	}
+	return *StartOpts
+}
+
 type WritersOpts struct {
 	Type      string
 	DirOutSvr string
@@ -47,7 +55,7 @@ type WritersOpts struct {
 }
 
 type Writer struct {
-	writerType        string
+	WriterType        string
 	SvrExportKeys     ValInfoList
 	CliExportKeys     ValInfoList
 	SvrExportUkeys    [][]string
@@ -63,23 +71,32 @@ type Writer struct {
 	UnionKeysCliData  []map[string]ValInfoList2
 }
 
-func (StartOpts *StartOptions) GenDeal() StartOptions {
-	if StartOpts.DirExcel == "" {
-		StartOpts.DirExcel = DEFALUT_EXCELDIR
-	}
-	if StartOpts.WritersOptsStr == nil {
-		StartOpts.WritersOpts = []WritersOpts{}
-	} else {
-		StartOpts.WritersOpts = toStartWriter(StartOpts.WritersOptsStr)
-	}
-	return *StartOpts
+type WriteWorking struct {
 }
 
-func ToString(param map[string]any) string {
-	byteData, err := json.Marshal(param)
-	if err != nil {
-		panic(err)
-	}
-	dataString := string(byteData)
-	return dataString
+func (w WriteWorking) preWorkClearSvrDir(worker WriterWorker) {
+	worker.ClearSvrDir()
+}
+func (w WriteWorking) preWorkClearCliDir(worker WriterWorker) {
+	worker.ClearCliDir()
+}
+func (w WriteWorking) workCreateCliAndWrite(worker WriterWorker) {
+	worker.AddSuffix()
+	worker.CreateCliDir()
+	worker.WriteCliIn()
+}
+func (w WriteWorking) workCreateSvrAndWrite(worker WriterWorker) {
+	worker.AddSuffix()
+	worker.CreateSvrDir()
+	worker.WriteSvrIn()
+}
+
+type WriterWorker interface {
+	AddSuffix()
+	ClearSvrDir()
+	ClearCliDir()
+	CreateSvrDir()
+	CreateCliDir()
+	WriteSvrIn()
+	WriteCliIn()
 }

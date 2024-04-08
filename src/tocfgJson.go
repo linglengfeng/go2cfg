@@ -5,49 +5,66 @@ import (
 	"strings"
 )
 
-func writeJson(writer Writer) error {
-	// 修改文件后缀名
-	writer.Suffix = ".json"
+// ---------------------------- 接口 start ---------------------------------
+type jsonWorker struct {
+	writer *Writer
+}
 
-	if writer.SvrPath != "" {
-		// 创建目录
-		createDir(writer.SvrPath)
-		// server primarykey data
-		svrFile := writer.SvrPath + "/" + writer.SvrFileName + writer.Suffix
-		svrdataPrimarykey := PrimarykeyJsonStr(writer.PrimarykeySvrData)
-		err := os.WriteFile(svrFile, append([]byte(svrdataPrimarykey), byte('\n')), 0644)
-		if err != nil {
-			return err
-		}
-		// server unionkey data
-		if len(writer.SvrExportUkeys) > 0 {
-			svrUnionFile := writer.SvrPath + "/" + writer.SvrFileName + "_ukey" + writer.Suffix
-			svrdataUnionkeys := UnionKeysJsonStr(writer.SvrExportUkeys, writer.UnionKeysSvrData)
-			err = os.WriteFile(svrUnionFile, append([]byte(svrdataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
-		}
+func (worker *jsonWorker) AddSuffix() {
+	worker.writer.Suffix = ".json"
+}
+func (worker *jsonWorker) ClearSvrDir() {
+	svrErlPath := worker.writer.SvrPath
+	deleteDir(svrErlPath)
+}
+func (worker *jsonWorker) ClearCliDir() {
+	cliErlPath := worker.writer.CliPath
+	deleteDir(cliErlPath)
+}
+func (worker *jsonWorker) CreateSvrDir() {
+	svrErlPath := worker.writer.SvrPath
+	createDir(svrErlPath)
+}
+func (worker *jsonWorker) CreateCliDir() {
+	cliErlPath := worker.writer.CliPath
+	createDir(cliErlPath)
+}
+func (worker *jsonWorker) WriteSvrIn() {
+	unionkeySuffix := "_ukey"
+	path := worker.writer.SvrPath
+	filename := worker.writer.SvrFileName
+	exportUkeys := worker.writer.SvrExportUkeys
+	primarykeyData := worker.writer.PrimarykeySvrData
+	unionKeysData := worker.writer.UnionKeysSvrData
+	writeJsonIn(unionkeySuffix, path, filename, exportUkeys, primarykeyData, unionKeysData, *worker.writer)
+}
+func (worker *jsonWorker) WriteCliIn() {
+	unionkeySuffix := "_ukey"
+	path := worker.writer.CliPath
+	filename := worker.writer.CliFileName
+	exportUkeys := worker.writer.CliExportUkeys
+	primarykeyData := worker.writer.PrimarykeyCliData
+	unionKeysData := worker.writer.UnionKeysCliData
+	writeJsonIn(unionkeySuffix, path, filename, exportUkeys, primarykeyData, unionKeysData, *worker.writer)
+}
+
+// ---------------------------- 接口 end ---------------------------------
+
+func writeJsonIn(unionkeySuffix string, path string, filename string, exportUkeys [][]string, primarykeyData []PrimarykeyVal, unionKeysData []map[string]ValInfoList2, writer Writer) error {
+	// server primarykey data
+	file := path + "/" + filename + writer.Suffix
+	dataPrimarykey := PrimarykeyJsonStr(primarykeyData)
+	err := os.WriteFile(file, append([]byte(dataPrimarykey), byte('\n')), 0644)
+	if err != nil {
+		return err
 	}
-
-	if writer.CliPath != "" {
-		// 创建目录
-		createDir(writer.CliPath)
-		// client primarykey data
-		cliFile := writer.CliPath + "/" + writer.CliFileName + writer.Suffix
-		clidataPrimarykey := PrimarykeyJsonStr(writer.PrimarykeyCliData)
-		err := os.WriteFile(cliFile, append([]byte(clidataPrimarykey), byte('\n')), 0644)
+	// server unionkey data
+	if len(exportUkeys) > 0 {
+		unionFileName := path + "/" + filename + unionkeySuffix + writer.Suffix
+		dataUnionkeys := UnionKeysJsonStr(exportUkeys, unionKeysData)
+		err = os.WriteFile(unionFileName, append([]byte(dataUnionkeys), byte('\n')), 0644)
 		if err != nil {
 			return err
-		}
-		// client unionkey data
-		if len(writer.CliExportUkeys) > 0 {
-			cliUnionFile := writer.CliPath + "/" + writer.CliFileName + "_ukey" + writer.Suffix
-			clidataUnionkeys := UnionKeysJsonStr(writer.CliExportUkeys, writer.UnionKeysCliData)
-			err = os.WriteFile(cliUnionFile, append([]byte(clidataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil

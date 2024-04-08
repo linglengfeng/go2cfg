@@ -4,89 +4,102 @@ import (
 	"os"
 )
 
-func writeErlHrl(writer Writer) error {
-	// 修改文件后缀名
-	writer.Suffix = ".erl"
+// ---------------------------- 接口 start ---------------------------------
+type erlHrlWorker struct {
+	writer     *Writer
+	svrErlPath string
+	svrHrlPath string
+	cliErlPath string
+	cliHrlPath string
+}
+
+func (worker *erlHrlWorker) AddSuffix() {
+	worker.writer.Suffix = ".erl"
+}
+func (worker *erlHrlWorker) ClearSvrDir() {
+	svrErlPath := worker.writer.SvrPath + "/erl"
+	svrHrlPath := worker.writer.SvrPath + "/include"
+	worker.svrErlPath = svrErlPath
+	worker.svrHrlPath = svrHrlPath
+	deleteDir(svrErlPath)
+	deleteDir(svrHrlPath)
+}
+func (worker *erlHrlWorker) ClearCliDir() {
+	cliErlPath := worker.writer.CliPath + "/erl"
+	cliHrlPath := worker.writer.CliPath + "/include"
+	worker.cliErlPath = cliErlPath
+	worker.cliHrlPath = cliHrlPath
+	deleteDir(cliErlPath)
+	deleteDir(cliHrlPath)
+}
+func (worker *erlHrlWorker) CreateSvrDir() {
+	svrErlPath := worker.svrErlPath
+	svrHrlPath := worker.svrHrlPath
+	createDir(svrErlPath)
+	createDir(svrHrlPath)
+}
+func (worker *erlHrlWorker) CreateCliDir() {
+	cliErlPath := worker.cliErlPath
+	cliHrlPath := worker.cliHrlPath
+	createDir(cliErlPath)
+	createDir(cliHrlPath)
+}
+func (worker *erlHrlWorker) WriteSvrIn() {
+	writeSvrInErlHrl(*worker)
+}
+func (worker *erlHrlWorker) WriteCliIn() {
+	writeCliInErlHrl(*worker)
+}
+
+// ---------------------------- 接口 end ---------------------------------
+
+func writeSvrInErlHrl(worker erlHrlWorker) {
 	perfix := "cfg_"
 	unionkeySuffix := "_ukey"
-	svrErlPath := writer.SvrPath + "/erl"
-	svrHrlPath := writer.SvrPath + "/include"
-	svrHrlFileName := svrHrlPath + "/cfg.hrl"
-	svrErlInclude := "../include/cfg.hrl"
-	if writer.SvrPath != "" {
-		// 创建目录
-		createDir(svrErlPath)
-		createDir(svrHrlPath)
-		// primarykey data
-		svrFile := svrErlPath + "/" + perfix + writer.SvrFileName + writer.Suffix
-		modulename := perfix + writer.SvrFileName
-		svrdataPrimarykey, svrdataPrimarykeyRecord := PrimarykeyErlHrlStr(svrErlInclude, modulename, writer.SvrExportKeys, writer.PrimarykeySvrData)
-		err := os.WriteFile(svrFile, append([]byte(svrdataPrimarykey), byte('\n')), 0644)
-		if err != nil {
-			return err
-		}
-		// unionkey data
-		svrUkeysRecord := ""
-		if len(writer.SvrExportUkeys) > 0 {
-			svrUnionFile := svrErlPath + "/" + perfix + writer.SvrFileName + unionkeySuffix + writer.Suffix
-			ukeyModuleName := modulename + unionkeySuffix
-			svrdataUnionkeys, svrdataUnionkeysRecord := UnionKeysErlHrlStr(svrErlInclude, ukeyModuleName, writer.SvrExportKeys, writer.SvrExportUkeys, writer.UnionKeysSvrData)
-			svrUkeysRecord = svrdataUnionkeysRecord
-			err = os.WriteFile(svrUnionFile, append([]byte(svrdataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
-		}
-		// hrl data
-		erlfilehrl, err := os.OpenFile(svrHrlFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-		defer erlfilehrl.Close()
-		_, err = erlfilehrl.WriteString(svrdataPrimarykeyRecord + svrUkeysRecord)
+	erlInclude := "../include/cfg.hrl"
+	hrlFileName := worker.svrHrlPath + "/cfg.hrl"
+	erlPath := worker.svrErlPath
+	writeErlHrlFile(perfix, unionkeySuffix, erlPath, hrlFileName, erlInclude, worker.writer)
+}
+func writeCliInErlHrl(worker erlHrlWorker) {
+	perfix := "cfg_"
+	unionkeySuffix := "_ukey"
+	erlInclude := "../include/cfg.hrl"
+	hrlFileName := worker.cliHrlPath + "/cfg.hrl"
+	erlPath := worker.cliErlPath
+	writeErlHrlFile(perfix, unionkeySuffix, erlPath, hrlFileName, erlInclude, worker.writer)
+}
+
+func writeErlHrlFile(perfix string, unionkeySuffix string, erlPath string, hrlFileName string, erlInclude string, writer *Writer) error {
+	// primarykey data
+	cliFile := erlPath + "/" + perfix + writer.CliFileName + writer.Suffix
+	modulename := perfix + writer.CliFileName
+	clidataPrimarykey, clidataPrimarykeyRecord := PrimarykeyErlHrlStr(erlInclude, modulename, writer.CliExportKeys, writer.PrimarykeyCliData)
+	err := os.WriteFile(cliFile, append([]byte(clidataPrimarykey), byte('\n')), 0644)
+	if err != nil {
+		return err
+	}
+	// unionkey data
+	cliUkeysRecord := ""
+	if len(writer.CliExportUkeys) > 0 {
+		cliUnionFile := erlPath + "/" + perfix + writer.CliFileName + unionkeySuffix + writer.Suffix
+		ukeyModuleName := modulename + unionkeySuffix
+		clidataUnionkeys, clidataUnionkeysRecord := UnionKeysErlHrlStr(erlInclude, ukeyModuleName, writer.CliExportKeys, writer.CliExportUkeys, writer.UnionKeysCliData)
+		cliUkeysRecord = clidataUnionkeysRecord
+		err = os.WriteFile(cliUnionFile, append([]byte(clidataUnionkeys), byte('\n')), 0644)
 		if err != nil {
 			return err
 		}
 	}
-
-	cliErlPath := writer.CliPath + "/erl"
-	cliHrlPath := writer.CliPath + "/include"
-	cliHrlFileName := cliHrlPath + "/cfg.hrl"
-	cliErlInclude := "../include/cfg.hrl"
-	if writer.CliPath != "" {
-		// 创建目录
-		createDir(cliErlPath)
-		createDir(cliHrlPath)
-		// primarykey data
-		cliFile := cliErlPath + "/" + perfix + writer.CliFileName + writer.Suffix
-		modulename := perfix + writer.CliFileName
-		clidataPrimarykey, clidataPrimarykeyRecord := PrimarykeyErlHrlStr(cliErlInclude, modulename, writer.CliExportKeys, writer.PrimarykeyCliData)
-		err := os.WriteFile(cliFile, append([]byte(clidataPrimarykey), byte('\n')), 0644)
-		if err != nil {
-			return err
-		}
-		// unionkey data
-		cliUkeysRecord := ""
-		if len(writer.CliExportUkeys) > 0 {
-			cliUnionFile := cliErlPath + "/" + perfix + writer.CliFileName + unionkeySuffix + writer.Suffix
-			ukeyModuleName := modulename + unionkeySuffix
-			clidataUnionkeys, clidataUnionkeysRecord := UnionKeysErlHrlStr(cliErlInclude, ukeyModuleName, writer.CliExportKeys, writer.CliExportUkeys, writer.UnionKeysCliData)
-			cliUkeysRecord = clidataUnionkeysRecord
-			err = os.WriteFile(cliUnionFile, append([]byte(clidataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
-		}
-		// hrl data
-		erlfilehrl, err := os.OpenFile(cliHrlFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-		defer erlfilehrl.Close()
-		_, err = erlfilehrl.WriteString(clidataPrimarykeyRecord + cliUkeysRecord)
-		if err != nil {
-			return err
-		}
+	// hrl data
+	erlfilehrl, err := os.OpenFile(hrlFileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer erlfilehrl.Close()
+	_, err = erlfilehrl.WriteString(clidataPrimarykeyRecord + cliUkeysRecord)
+	if err != nil {
+		return err
 	}
 	return nil
 }

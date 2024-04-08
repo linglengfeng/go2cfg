@@ -5,55 +5,73 @@ import (
 	"strings"
 )
 
-func writeErl(writer Writer) error {
-	// 修改文件后缀名
-	writer.Suffix = ".erl"
+// ---------------------------- 接口 start ---------------------------------
+type erlWorker struct {
+	writer *Writer
+}
+
+func (worker *erlWorker) AddSuffix() {
+	worker.writer.Suffix = ".erl"
+}
+func (worker *erlWorker) ClearSvrDir() {
+	svrErlPath := worker.writer.SvrPath
+	deleteDir(svrErlPath)
+}
+func (worker *erlWorker) ClearCliDir() {
+	cliErlPath := worker.writer.CliPath
+	deleteDir(cliErlPath)
+}
+func (worker *erlWorker) CreateSvrDir() {
+	svrErlPath := worker.writer.SvrPath
+	createDir(svrErlPath)
+}
+func (worker *erlWorker) CreateCliDir() {
+	cliErlPath := worker.writer.CliPath
+	createDir(cliErlPath)
+}
+func (worker *erlWorker) WriteSvrIn() {
 	perfix := "cfg_"
 	unionkeySuffix := "_ukey"
+	path := worker.writer.SvrPath
+	filename := worker.writer.SvrFileName
+	exportKeys := worker.writer.SvrExportKeys
+	exportUkeys := worker.writer.SvrExportUkeys
+	primarykeyData := worker.writer.PrimarykeySvrData
+	unionKeysData := worker.writer.UnionKeysSvrData
+	writeErlIn(perfix, unionkeySuffix, path, filename, exportKeys, exportUkeys, primarykeyData, unionKeysData, *worker.writer)
+}
+func (worker *erlWorker) WriteCliIn() {
+	perfix := "cfg_"
+	unionkeySuffix := "_ukey"
+	path := worker.writer.CliPath
+	filename := worker.writer.CliFileName
+	exportKeys := worker.writer.CliExportKeys
+	exportUkeys := worker.writer.CliExportUkeys
+	primarykeyData := worker.writer.PrimarykeyCliData
+	unionKeysData := worker.writer.UnionKeysCliData
+	writeErlIn(perfix, unionkeySuffix, path, filename, exportKeys, exportUkeys, primarykeyData, unionKeysData, *worker.writer)
+}
 
-	if writer.SvrPath != "" {
-		// 创建目录
-		createDir(writer.SvrPath)
-		// server primarykey data
-		svrFile := writer.SvrPath + "/" + perfix + writer.SvrFileName + writer.Suffix
-		modulename := perfix + writer.SvrFileName
-		svrdataPrimarykey := PrimarykeyErlStr(modulename, writer.SvrExportKeys, writer.PrimarykeySvrData)
-		err := os.WriteFile(svrFile, append([]byte(svrdataPrimarykey), byte('\n')), 0644)
-		if err != nil {
-			return err
-		}
-		// server unionkey data
-		if len(writer.SvrExportUkeys) > 0 {
-			svrUnionFile := writer.SvrPath + "/" + perfix + writer.SvrFileName + unionkeySuffix + writer.Suffix
-			ukeyModuleName := modulename + unionkeySuffix
-			svrdataUnionkeys := UnionKeysErlStr(ukeyModuleName, writer.SvrExportKeys, writer.SvrExportUkeys, writer.UnionKeysSvrData)
-			err = os.WriteFile(svrUnionFile, append([]byte(svrdataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
-		}
+// ---------------------------- 接口 end ---------------------------------
+
+func writeErlIn(perfix string, unionkeySuffix string, path string, filename string, exportKeys ValInfoList,
+	exportUkeys [][]string, primarykeyData []PrimarykeyVal, unionKeysData []map[string]ValInfoList2, writer Writer) error {
+	// server primarykey data
+	svrFile := path + "/" + perfix + filename + writer.Suffix
+	modulename := perfix + filename
+	svrdataPrimarykey := PrimarykeyErlStr(modulename, exportKeys, primarykeyData)
+	err := os.WriteFile(svrFile, append([]byte(svrdataPrimarykey), byte('\n')), 0644)
+	if err != nil {
+		return err
 	}
-
-	if writer.CliPath != "" {
-		// 创建目录
-		createDir(writer.CliPath)
-		// client primarykey data
-		cliFile := writer.CliPath + "/" + perfix + writer.CliFileName + writer.Suffix
-		modulename := perfix + writer.CliFileName
-		clidataPrimarykey := PrimarykeyErlStr(modulename, writer.SvrExportKeys, writer.PrimarykeySvrData)
-		err := os.WriteFile(cliFile, append([]byte(clidataPrimarykey), byte('\n')), 0644)
+	// server unionkey data
+	if len(exportUkeys) > 0 {
+		svrUnionFile := path + "/" + perfix + filename + unionkeySuffix + writer.Suffix
+		ukeyModuleName := modulename + unionkeySuffix
+		svrdataUnionkeys := UnionKeysErlStr(ukeyModuleName, exportKeys, exportUkeys, unionKeysData)
+		err = os.WriteFile(svrUnionFile, append([]byte(svrdataUnionkeys), byte('\n')), 0644)
 		if err != nil {
 			return err
-		}
-		// client unionkey data
-		if len(writer.CliExportUkeys) > 0 {
-			cliUnionFile := writer.CliPath + "/" + perfix + writer.CliFileName + unionkeySuffix + writer.Suffix
-			ukeyModuleName := modulename + unionkeySuffix
-			clidataUnionkeys := UnionKeysErlStr(ukeyModuleName, writer.CliExportKeys, writer.CliExportUkeys, writer.UnionKeysCliData)
-			err = os.WriteFile(cliUnionFile, append([]byte(clidataUnionkeys), byte('\n')), 0644)
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil

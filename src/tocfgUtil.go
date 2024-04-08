@@ -3,6 +3,7 @@ package tocfg
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/tealeg/xlsx"
@@ -11,6 +12,29 @@ import (
 func createDir(dir string) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		return os.MkdirAll(dir, 0644)
+	}
+	return nil
+}
+
+func deleteDir(dirPath string) error {
+	err := filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			err := os.Remove(path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	err = os.RemoveAll(dirPath)
+	if err != nil {
+		return err
 	}
 	return nil
 }
