@@ -1,12 +1,11 @@
 # go2cfg
-excel to file
+excel to any file
+目前支持 xlsx to txt, xlsx to json, xlsx to erl, xlsx to erl and hrl
 
-支持json,txt
-
-想添加别的格式，在tocfgWriter.go函数initWorker中添加接口WriterWorker
+## 如何添加别的文件类型
+在tocfgWriter.go函数initWorker中添加接口WriterWorker
 参照 tocfgTxt.go, tocfgJson.go
 格式说明代码：tocfgConst.go
-
 
 ## config.json 说明
 		
@@ -16,7 +15,7 @@ writers 必填 导出列表
     out_svr_dir 可选，没有字段表示不导出
     out_cli_dir 可选，没有字段表示不导出
 
-导出文件参照：output目录下
+导出文件参照：output目录
 
 ```json
 {
