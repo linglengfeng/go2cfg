@@ -2,6 +2,7 @@ package tocfg
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,12 +25,13 @@ func Start(Options StartOptions) {
 	if len(writerlist) <= 0 {
 		return
 	}
-	for _, file := range excelFiles {
-		if isTempFile(file.Name()) {
-			continue
-		}
-		startSingle(file.Name(), Options, wokerlist, writerlist)
-	}
+	// for _, file := range excelFiles {
+	// 	if isTempFile(file.Name()) {
+	// 		continue
+	// 	}
+	// 	startSingle(file.Name(), Options, wokerlist, writerlist)
+	// }
+	StartRecursion(len(excelFiles), excelFiles, Options, wokerlist, writerlist)
 }
 
 func startSingle(fileName string, Options StartOptions, wokerlist []WriterWorker, writerlist []*Writer) {
@@ -147,4 +149,15 @@ func generateUnionKeysInfo(unionKeys [][]string, primarykeyInfo []PrimarykeyVal)
 		}
 	}
 	return unionInfo
+}
+
+func StartRecursion(len int, excelFiles []fs.DirEntry, Options StartOptions, wokerlist []WriterWorker, writerlist []*Writer) {
+	if len <= 0 {
+		return
+	}
+	file := excelFiles[len-1]
+	if !isTempFile(file.Name()) {
+		startSingle(file.Name(), Options, wokerlist, writerlist)
+	}
+	StartRecursion(len-1, excelFiles, Options, wokerlist, writerlist)
 }

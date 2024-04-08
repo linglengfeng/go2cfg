@@ -11,10 +11,10 @@ get_age({11}) ->
 get_age(_) ->
 	[].
 
-get_id_name({1, "name1"}) ->
-	[#cfg{id=1,name="name1",age=10,sex=1,items=[1,2,3]}];
 get_id_name({2, "name2"}) ->
 	[#cfg{id=2,name="name2",age=11,sex=2,items=[1,2,4]}];
+get_id_name({1, "name1"}) ->
+	[#cfg{id=1,name="name1",age=10,sex=1,items=[1,2,3]}];
 get_id_name(_) ->
 	[].
 
